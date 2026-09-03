@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { CheckCircle2Icon } from "lucide-react";
 
 import { ChoiceChips } from "@/components/choice-chips";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { useLeadSelection, type CareType } from "@/components/lead-context";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { buttonVariants } from "@/components/ui/button";
 import {
   careTypes,
   consentText,
@@ -17,7 +17,6 @@ import {
 } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
-type CareType = (typeof careTypes)[number]["id"];
 type Who = (typeof whoNeedsCare)[number];
 type Timeline = (typeof timelines)[number]["id"];
 
@@ -26,7 +25,6 @@ type FormState = {
   phone: string;
   zip: string;
   email: string;
-  careType: CareType | "";
   whoNeedsCare: Who | "";
   timeline: Timeline | "";
   consent: boolean;
@@ -37,7 +35,6 @@ const emptyForm: FormState = {
   phone: "",
   zip: "",
   email: "",
-  careType: "",
   whoNeedsCare: "",
   timeline: "",
   consent: false,
@@ -46,21 +43,15 @@ const emptyForm: FormState = {
 const fieldClass = "h-11 bg-background text-base md:text-base";
 
 export function LeadForm({ className }: { className?: string }) {
+  const { careType, setCareType } = useLeadSelection();
   const [form, setForm] = useState<FormState>(emptyForm);
   const [error, setError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof FormState, string>>>({});
-  const [status, setStatus] = useState<"idle" | "saving" | "success" | "error">("idle");
-
-  useEffect(() => {
-    function onPick(event: Event) {
-      const careType = (event as CustomEvent<CareType>).detail;
-      if (!careType) return;
-      setForm((current) => ({ ...current, careType }));
-      document.getElementById("get-help")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-    window.addEventListener("pick-care", onPick);
-    return () => window.removeEventListener("pick-care", onPick);
-  }, []);
+  const [fieldErrors, setFieldErrors] = useState<
+    Partial<Record<keyof FormState | "careType", string>>
+  >({});
+  const [status, setStatus] = useState<"idle" | "saving" | "success" | "error">(
+    "idle"
+  );
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -70,18 +61,42 @@ export function LeadForm({ className }: { className?: string }) {
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const nextErrors: Partial<Record<keyof FormState, string>> = {};
-    if (form.name.trim().length < 2) nextErrors.name = "Please enter your name.";
-    if (form.phone.replace(/\D/g, "").length < 10) {
+    const data = new FormData(event.currentTarget);
+    const next = {
+      name: String(data.get("name") ?? form.name),
+      phone: String(data.get("phone") ?? form.phone),
+      zip: String(data.get("zip") ?? form.zip),
+      email: String(data.get("email") ?? form.email),
+      whoNeedsCare: (String(data.get("whoNeedsCare") || form.whoNeedsCare) ||
+        "") as Who | "",
+      timeline: (String(data.get("timeline") || form.timeline) ||
+        "") as Timeline | "",
+      consent: data.get("consent") === "on" || form.consent,
+    };
+    const selectedCare = (String(data.get("careType") || careType) ||
+      "") as CareType | "";
+
+    setForm(next);
+    if (selectedCare) {
+      setCareType(selectedCare);
+    }
+
+    const nextErrors: Partial<Record<keyof FormState | "careType", string>> = {};
+    if (next.name.trim().length < 2) nextErrors.name = "Please enter your name.";
+    if (next.phone.replace(/\D/g, "").length < 10) {
       nextErrors.phone = "Use a 10-digit phone number.";
     }
-    if (!/^\d{5}(-\d{4})?$/.test(form.zip.trim())) {
+    if (!/^\d{5}(-\d{4})?$/.test(next.zip.trim())) {
       nextErrors.zip = "Use a 5-digit ZIP code.";
     }
-    if (!form.whoNeedsCare) nextErrors.whoNeedsCare = "Tell us who needs care.";
-    if (!form.careType) nextErrors.careType = "Choose the kind of care you are considering.";
-    if (!form.timeline) nextErrors.timeline = "Choose a timeline.";
-    if (!form.consent) nextErrors.consent = "Please check the box so we can call you back.";
+    if (!next.whoNeedsCare) nextErrors.whoNeedsCare = "Tell us who needs care.";
+    if (!selectedCare) {
+      nextErrors.careType = "Choose the kind of care you are considering.";
+    }
+    if (!next.timeline) nextErrors.timeline = "Choose a timeline.";
+    if (!next.consent) {
+      nextErrors.consent = "Please check the box so we can call you back.";
+    }
     if (Object.keys(nextErrors).length > 0) {
       setFieldErrors(nextErrors);
       setStatus("error");
@@ -97,7 +112,8 @@ export function LeadForm({ className }: { className?: string }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...form,
+          ...next,
+          careType: selectedCare,
           consent: true,
         }),
       });
@@ -119,8 +135,9 @@ export function LeadForm({ className }: { className?: string }) {
   if (status === "success") {
     return (
       <div
+        id="get-help"
         className={cn(
-          "rounded-3xl bg-card p-6 shadow-sm ring-1 ring-foreground/10 sm:p-8",
+          "scroll-mt-24 rounded-3xl bg-card p-6 shadow-sm ring-1 ring-foreground/10 sm:p-8",
           className
         )}
       >
@@ -146,6 +163,7 @@ export function LeadForm({ className }: { className?: string }) {
     <form
       id="get-help"
       onSubmit={onSubmit}
+      noValidate
       className={cn(
         "scroll-mt-24 rounded-3xl bg-card p-6 shadow-sm ring-1 ring-foreground/10 sm:p-8",
         className
@@ -160,6 +178,10 @@ export function LeadForm({ className }: { className?: string }) {
       <p className="mt-2 text-sm leading-6 text-muted-foreground">
         No account needed. We do not push a particular building.
       </p>
+
+      <input type="hidden" name="whoNeedsCare" value={form.whoNeedsCare} />
+      <input type="hidden" name="careType" value={careType} />
+      <input type="hidden" name="timeline" value={form.timeline} />
 
       <div className="mt-6 grid gap-5">
         <div className="grid gap-2">
@@ -224,8 +246,8 @@ export function LeadForm({ className }: { className?: string }) {
 
         <ChoiceChips
           legend="What kind of care?"
-          value={form.careType}
-          onChange={(value) => update("careType", value)}
+          value={careType}
+          onChange={(value) => setCareType(value)}
           options={careTypes.map((item) => ({ id: item.id, label: item.title }))}
           error={fieldErrors.careType}
         />
@@ -252,11 +274,13 @@ export function LeadForm({ className }: { className?: string }) {
         </div>
 
         <label className="flex items-start gap-3 text-sm leading-6 text-muted-foreground">
-          <Checkbox
+          <input
+            type="checkbox"
+            name="consent"
             checked={form.consent}
-            onCheckedChange={(checked) => update("consent", checked === true)}
+            onChange={(event) => update("consent", event.target.checked)}
             aria-invalid={Boolean(fieldErrors.consent)}
-            className="mt-0.5"
+            className="mt-1 size-4 shrink-0 rounded border-input accent-primary"
           />
           <span>
             {consentText}{" "}
@@ -270,18 +294,21 @@ export function LeadForm({ className }: { className?: string }) {
         ) : null}
 
         {error ? (
-          <p className="rounded-xl bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          <p
+            role="alert"
+            className="rounded-xl bg-destructive/10 px-3 py-2 text-sm text-destructive"
+          >
             {error}
           </p>
         ) : null}
 
-        <Button
+        <button
           type="submit"
           disabled={status === "saving"}
-          className="h-12 w-full text-base"
+          className={cn(buttonVariants({ variant: "default" }), "h-12 w-full text-base")}
         >
           {status === "saving" ? "Sending…" : "Request a callback"}
-        </Button>
+        </button>
         <p className="text-center text-sm text-muted-foreground">
           Prefer to talk now?{" "}
           <a href={site.phoneHref} className="font-medium text-foreground underline underline-offset-2">

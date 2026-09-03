@@ -2,6 +2,7 @@ import { Home, PhoneCall, ShieldCheck } from "lucide-react";
 
 import { CareTypeCard } from "@/components/care-type-card";
 import { LeadForm } from "@/components/lead-form";
+import { LeadProvider } from "@/components/lead-context";
 import { careTypes, site } from "@/lib/site";
 
 const steps = [
@@ -40,6 +41,7 @@ const faqs = [
 
 export default function HomePage() {
   return (
+    <LeadProvider>
     <div>
       <section className="mx-auto grid w-full max-w-6xl items-start gap-10 px-4 py-10 sm:px-6 sm:py-16 lg:grid-cols-[1.05fr_0.95fr] lg:gap-14">
         <div className="pt-2">
@@ -139,6 +141,7 @@ export default function HomePage() {
         </div>
       </div>
     </div>
+    </LeadProvider>
   );
 }
 
