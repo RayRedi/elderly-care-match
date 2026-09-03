@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { CheckCircle2Icon } from "lucide-react";
 
 import { ChoiceChips } from "@/components/choice-chips";
@@ -52,6 +52,13 @@ export function LeadForm({ className }: { className?: string }) {
   const [status, setStatus] = useState<"idle" | "saving" | "success" | "error">(
     "idle"
   );
+
+  useEffect(() => {
+    if (!careType) return;
+    setFieldErrors((current) =>
+      current.careType ? { ...current, careType: undefined } : current
+    );
+  }, [careType]);
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((current) => ({ ...current, [key]: value }));
