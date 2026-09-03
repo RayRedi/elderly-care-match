@@ -56,6 +56,7 @@ export type StoredLead = LeadInput & {
   consentText: string;
   source: string;
   capturedAt: string;
+  syncedAt?: string;
 };
 
 export type LeadDestination = "notion" | "local";
@@ -114,16 +115,23 @@ export function buildStoredLead(input: Omit<LeadInput, "email"> & { email?: stri
 
 const localFile = path.join(process.cwd(), ".data", "leads.json");
 
-async function saveLocalLead(lead: StoredLead) {
-  await mkdir(path.dirname(localFile), { recursive: true });
-  let existing: StoredLead[] = [];
+export async function readLocalLeads(): Promise<StoredLead[]> {
   try {
-    existing = JSON.parse(await readFile(localFile, "utf8")) as StoredLead[];
+    return JSON.parse(await readFile(localFile, "utf8")) as StoredLead[];
   } catch {
-    existing = [];
+    return [];
   }
+}
+
+async function writeLocalLeads(leads: StoredLead[]) {
+  await mkdir(path.dirname(localFile), { recursive: true });
+  await writeFile(localFile, JSON.stringify(leads, null, 2));
+}
+
+async function saveLocalLead(lead: StoredLead) {
+  const existing = await readLocalLeads();
   existing.unshift(lead);
-  await writeFile(localFile, JSON.stringify(existing, null, 2));
+  await writeLocalLeads(existing);
 }
 
 function notionHeaders(token: string) {
@@ -189,6 +197,7 @@ export async function captureLead(input: Omit<LeadInput, "email"> & { email?: st
   try {
     const wroteToNotion = await saveNotionLead(lead);
     if (wroteToNotion) {
+      await saveLocalLead({ ...lead, syncedAt: new Date().toISOString() });
       return { destination: "notion" };
     }
   } catch (error) {
@@ -201,4 +210,42 @@ export async function captureLead(input: Omit<LeadInput, "email"> & { email?: st
 
   await saveLocalLead(lead);
   return { destination: "local" };
+}
+
+export type SyncResult = {
+  sent: number;
+  alreadySynced: number;
+  failed: { leadId: string; name: string; error: string }[];
+};
+
+export async function syncPendingLeads(): Promise<SyncResult> {
+  if (!process.env.NOTION_TOKEN) {
+    throw new Error(
+      "NOTION_TOKEN is not set. Add it to .env.local and restart the dev server."
+    );
+  }
+
+  const leads = await readLocalLeads();
+  const result: SyncResult = { sent: 0, alreadySynced: 0, failed: [] };
+
+  for (const lead of leads) {
+    if (lead.syncedAt) {
+      result.alreadySynced += 1;
+      continue;
+    }
+    try {
+      await saveNotionLead(lead);
+      lead.syncedAt = new Date().toISOString();
+      result.sent += 1;
+    } catch (error) {
+      result.failed.push({
+        leadId: lead.leadId,
+        name: lead.name,
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  }
+
+  await writeLocalLeads(leads);
+  return result;
 }

@@ -6,7 +6,8 @@
     "dev": "next dev --port 4317",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "sync:notion": "curl -fsS -X POST http://127.0.0.1:4317/api/leads/sync"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
