@@ -403,7 +403,7 @@ export function LeadForm({ className }: { className?: string }) {
             </button>
           )}
         </div>
-        <p className="text-center text-sm text-muted-foreground">
+        <p className="text-center text-base text-muted-foreground">
           Prefer to talk now?{" "}
           <a href={site.phoneHref} className="font-medium text-foreground underline underline-offset-2">
             {site.phone}

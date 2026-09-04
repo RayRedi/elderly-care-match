@@ -17,8 +17,8 @@ export function ChoiceChips<T extends string>({
 }: ChoiceChipsProps<T>) {
   return (
     <fieldset>
-      <legend className="mb-2 text-sm font-medium text-foreground">{legend}</legend>
-      <div className="flex flex-wrap gap-2">
+      <legend className="mb-3 text-lg font-medium text-foreground">{legend}</legend>
+      <div className="flex flex-wrap gap-2.5">
         {options.map((option) => {
           const selected = value === option.id;
           return (
@@ -28,7 +28,7 @@ export function ChoiceChips<T extends string>({
               aria-pressed={selected}
               onClick={() => onChange(option.id)}
               className={cn(
-                "rounded-full border px-3.5 py-2 text-sm transition-colors",
+                "rounded-full border px-4 py-2.5 text-base transition-colors",
                 selected
                   ? "border-primary bg-primary text-primary-foreground"
                   : "border-border bg-background text-foreground hover:border-primary/40 hover:bg-accent"
@@ -39,7 +39,7 @@ export function ChoiceChips<T extends string>({
           );
         })}
       </div>
-      {error ? <p className="mt-2 text-sm text-destructive">{error}</p> : null}
+          {error ? <p className="mt-2 text-base text-destructive">{error}</p> : null}
     </fieldset>
   );
 }
