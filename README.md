@@ -16,25 +16,47 @@ Open [http://127.0.0.1:4317](http://127.0.0.1:4317).
 
 ## Live URL
 
-The callback page is deployed on Vercel:
+The callback page runs on Vercel under the **business assistant** team. The public hostname is
+always `<project-name>.vercel.app`, so the project name is the URL families see. Rename the
+project and the hostname follows.
 
-**https://temporary-swift-zircon-kcfz2ag.vercel.app**
+The name families should see is `elderly-care-match`, which gives
+`https://elderly-care-match.vercel.app`.
 
-That hostname is a public production deploy. Claim it into the Vercel team so it does not expire:
+### Free up the good name first
 
-**https://vercel.com/claim-deployment?code=7c0ca7cb-9e2c-4ef1-8ccc-b5f820f05a2b**
+Four empty projects were created while working out how to deploy from this environment. They
+serve a placeholder page and nothing depends on them. Delete them in **Settings → General →
+Delete Project**:
 
-After claiming:
+- `elderly-care-match` — this one is holding the name we want
+- `ecm-family-leads`
+- `ecm-leads-live`
+- `wa-senior-care-leads-fresh`
 
-1. In the project **Settings → Environment Variables**, set production values (do not commit them):
+### Then rename the real project
+
+The real project is the one that was claimed from a temporary deploy, so it currently has a
+random name like `temporary-swift-zircon-…`. In that project, **Settings → General → Project
+Name**, change it to `elderly-care-match`.
+
+Backup names if you would rather not delete anything: `elderlycarematch`,
+`elderly-care-match-wa`, `wa-senior-care`.
+
+### Finish the setup
+
+1. **Settings → Environment Variables**, Production (do not commit these):
    - `NOTION_TOKEN` — the Family Care Leads integration token
    - `NOTION_DATABASE_ID` — `86e4fdfe81964fbf80a521e0f8176afc`
-   - `NEXT_PUBLIC_SITE_URL` — the stable `https://….vercel.app` URL Vercel assigns
-2. In **Settings → Deployment Protection**, turn off Vercel Authentication for production so families are not asked to log in.
-3. Redeploy once so the env vars apply.
-4. Put the stable URL in Google Business Profile, Instagram bio, 211/listing copy, ads, and hospital-desk cards.
+   - `NEXT_PUBLIC_SITE_URL` — the final `https://….vercel.app` URL
+2. **Settings → Deployment Protection** — turn off Vercel Authentication for production so
+   families are not asked to log into Vercel.
+3. Redeploy once so the environment variables apply.
+4. Put the final URL in Google Business Profile, Instagram bio, 211/listing copy, ads, and
+   hospital-desk cards.
 
-[www.elderlycarematch.com](https://www.elderlycarematch.com/) stays as-is. This page is only the capture funnel into Family Care Leads.
+[www.elderlycarematch.com](https://www.elderlycarematch.com/) stays as-is. This page is only the
+capture funnel into Family Care Leads.
 
 ## Connect Notion
 
