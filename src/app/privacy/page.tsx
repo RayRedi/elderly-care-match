@@ -20,8 +20,8 @@ export default function PrivacyPage() {
       <div className="mt-6 space-y-5 text-base leading-8 text-muted-foreground">
         <p>
           This page collects only what we need to call you back about senior care
-          in Washington: your name, phone, ZIP code, the kind of care you are
-          considering, timing, and optional email.
+          in Washington: your name, phone, city, state, ZIP code, the kind of
+          care you are considering, timing, and optional email.
         </p>
         <p>
           We store that inquiry in our Family Care Leads list so we can follow

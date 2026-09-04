@@ -23,6 +23,8 @@ const timelineValues = [
 export const leadInputSchema = z.object({
   name: z.string().trim().min(2, "Please enter your name.").max(80),
   phone: z.string().trim().min(1, "Please enter a phone number."),
+  city: z.string().trim().min(2, "Please enter the city where care is needed.").max(80),
+  state: z.string().trim().length(2, "Please choose a state."),
   zip: z
     .string()
     .trim()
@@ -156,6 +158,8 @@ async function saveNotionLead(lead: StoredLead) {
   const properties: Record<string, unknown> = {
     Name: { title: [{ text: { content: lead.name } }] },
     Phone: { phone_number: formatPhone(lead.phone) },
+    City: textProp(lead.city),
+    State: textProp(lead.state),
     ZIP: textProp(lead.zip),
     "Care type": { select: { name: lead.careType } },
     "Who needs care": { select: { name: lead.whoNeedsCare } },

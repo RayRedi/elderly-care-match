@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { CheckCircle2Icon } from "lucide-react";
 
 import { ChoiceChips } from "@/components/choice-chips";
-import { useLeadSelection, type CareType } from "@/components/lead-context";
+import { useLeadSelection } from "@/components/lead-context";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { buttonVariants } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import {
   careTypes,
   consentText,
   site,
+  states,
   timelines,
   whoNeedsCare,
 } from "@/lib/site";
@@ -23,6 +24,8 @@ type Timeline = (typeof timelines)[number]["id"];
 type FormState = {
   name: string;
   phone: string;
+  city: string;
+  state: string;
   zip: string;
   email: string;
   whoNeedsCare: Who | "";
@@ -33,6 +36,8 @@ type FormState = {
 const emptyForm: FormState = {
   name: "",
   phone: "",
+  city: "",
+  state: "WA",
   zip: "",
   email: "",
   whoNeedsCare: "",
@@ -44,6 +49,7 @@ const fieldClass = "h-11 bg-background text-base md:text-base";
 
 export function LeadForm({ className }: { className?: string }) {
   const { careType, setCareType } = useLeadSelection();
+  const [step, setStep] = useState(1);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<
@@ -53,13 +59,6 @@ export function LeadForm({ className }: { className?: string }) {
     "idle"
   );
 
-  useEffect(() => {
-    if (!careType) return;
-    setFieldErrors((current) =>
-      current.careType ? { ...current, careType: undefined } : current
-    );
-  }, [careType]);
-
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((current) => ({ ...current, [key]: value }));
     setFieldErrors((current) => ({ ...current, [key]: undefined }));
@@ -68,31 +67,18 @@ export function LeadForm({ className }: { className?: string }) {
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    const next = {
-      name: String(data.get("name") ?? form.name),
-      phone: String(data.get("phone") ?? form.phone),
-      zip: String(data.get("zip") ?? form.zip),
-      email: String(data.get("email") ?? form.email),
-      whoNeedsCare: (String(data.get("whoNeedsCare") || form.whoNeedsCare) ||
-        "") as Who | "",
-      timeline: (String(data.get("timeline") || form.timeline) ||
-        "") as Timeline | "",
-      consent: data.get("consent") === "on" || form.consent,
-    };
-    const selectedCare = (String(data.get("careType") || careType) ||
-      "") as CareType | "";
-
-    setForm(next);
-    if (selectedCare) {
-      setCareType(selectedCare);
-    }
+    const next = form;
+    const selectedCare = careType;
 
     const nextErrors: Partial<Record<keyof FormState | "careType", string>> = {};
     if (next.name.trim().length < 2) nextErrors.name = "Please enter your name.";
     if (next.phone.replace(/\D/g, "").length < 10) {
       nextErrors.phone = "Use a 10-digit phone number.";
     }
+    if (next.city.trim().length < 2) {
+      nextErrors.city = "Please enter the city where care is needed.";
+    }
+    if (!next.state) nextErrors.state = "Please choose a state.";
     if (!/^\d{5}(-\d{4})?$/.test(next.zip.trim())) {
       nextErrors.zip = "Use a 5-digit ZIP code.";
     }
@@ -176,14 +162,29 @@ export function LeadForm({ className }: { className?: string }) {
         className
       )}
     >
-      <p className="text-sm font-medium tracking-wide text-primary uppercase">
-        Free callback
-      </p>
-      <h2 className="font-heading mt-1 text-2xl text-foreground sm:text-3xl">
-        Tell us the situation. We will call you.
-      </h2>
-      <p className="mt-2 text-sm leading-6 text-muted-foreground">
-        No account needed. We do not push a particular building.
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-sm font-medium tracking-wide text-primary uppercase">
+            Free callback
+          </p>
+          <h2 className="font-heading mt-1 text-2xl text-foreground sm:text-3xl">
+            {step === 1 && "What kind of help do you need?"}
+            {step === 2 && "Where is care needed?"}
+            {step === 3 && "How can we reach you?"}
+          </h2>
+        </div>
+        <p className="shrink-0 pt-1 text-sm font-medium text-muted-foreground">
+          {step} of 3
+        </p>
+      </div>
+      <div className="mt-5 h-1.5 overflow-hidden rounded-full bg-secondary">
+        <div
+          className="h-full rounded-full bg-primary transition-all duration-300"
+          style={{ width: `${(step / 3) * 100}%` }}
+        />
+      </div>
+      <p className="mt-3 text-sm leading-6 text-muted-foreground">
+        No account needed. Your answers stay here as you move between steps.
       </p>
 
       <input type="hidden" name="whoNeedsCare" value={form.whoNeedsCare} />
@@ -191,96 +192,139 @@ export function LeadForm({ className }: { className?: string }) {
       <input type="hidden" name="timeline" value={form.timeline} />
 
       <div className="mt-6 grid gap-5">
-        <div className="grid gap-2">
-          <Label htmlFor="name">Your name</Label>
-          <Input
-            id="name"
-            name="name"
-            autoComplete="name"
-            value={form.name}
-            onChange={(event) => update("name", event.target.value)}
-            aria-invalid={Boolean(fieldErrors.name)}
-            className={fieldClass}
-          />
-          {fieldErrors.name ? (
-            <p className="text-sm text-destructive">{fieldErrors.name}</p>
-          ) : null}
-        </div>
-
-        <div className="grid gap-5 sm:grid-cols-2">
-          <div className="grid gap-2">
-            <Label htmlFor="phone">Phone</Label>
-            <Input
-              id="phone"
-              name="phone"
-              type="tel"
-              inputMode="tel"
-              autoComplete="tel"
-              value={form.phone}
-              onChange={(event) => update("phone", event.target.value)}
-              aria-invalid={Boolean(fieldErrors.phone)}
-              className={fieldClass}
+        {step === 1 ? (
+          <>
+            <ChoiceChips
+              legend="Who needs care?"
+              value={form.whoNeedsCare}
+              onChange={(value) => update("whoNeedsCare", value)}
+              options={whoNeedsCare.map((id) => ({ id, label: id }))}
+              error={fieldErrors.whoNeedsCare}
             />
-            {fieldErrors.phone ? (
-              <p className="text-sm text-destructive">{fieldErrors.phone}</p>
-            ) : null}
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="zip">ZIP code</Label>
-            <Input
-              id="zip"
-              name="zip"
-              inputMode="numeric"
-              autoComplete="postal-code"
-              value={form.zip}
-              onChange={(event) => update("zip", event.target.value)}
-              aria-invalid={Boolean(fieldErrors.zip)}
-              className={fieldClass}
+            <ChoiceChips
+              legend="What kind of care?"
+              value={careType}
+              onChange={(value) => setCareType(value)}
+              options={careTypes.map((item) => ({ id: item.id, label: item.title }))}
+              error={careType ? undefined : fieldErrors.careType}
             />
-            {fieldErrors.zip ? (
-              <p className="text-sm text-destructive">{fieldErrors.zip}</p>
-            ) : null}
-          </div>
-        </div>
+            <ChoiceChips
+              legend="How soon?"
+              value={form.timeline}
+              onChange={(value) => update("timeline", value)}
+              options={timelines}
+              error={fieldErrors.timeline}
+            />
+          </>
+        ) : null}
 
-        <ChoiceChips
-          legend="Who needs care?"
-          value={form.whoNeedsCare}
-          onChange={(value) => update("whoNeedsCare", value)}
-          options={whoNeedsCare.map((id) => ({ id, label: id }))}
-          error={fieldErrors.whoNeedsCare}
-        />
+        {step === 2 ? (
+          <>
+            <div className="grid gap-2">
+              <Label htmlFor="city">City where care is needed</Label>
+              <Input
+                id="city"
+                name="city"
+                autoComplete="address-level2"
+                value={form.city}
+                onChange={(event) => update("city", event.target.value)}
+                aria-invalid={Boolean(fieldErrors.city)}
+                className={fieldClass}
+                placeholder="Seattle"
+              />
+              {fieldErrors.city ? (
+                <p className="text-sm text-destructive">{fieldErrors.city}</p>
+              ) : null}
+            </div>
+            <div className="grid grid-cols-[1fr_1fr] gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="state">State</Label>
+                <select
+                  id="state"
+                  name="state"
+                  autoComplete="address-level1"
+                  value={form.state}
+                  onChange={(event) => update("state", event.target.value)}
+                  className={cn(fieldClass, "w-full rounded-lg border border-input px-3 outline-none focus:border-ring focus:ring-3 focus:ring-ring/20")}
+                >
+                  {states.map(([code, name]) => (
+                    <option key={code} value={code}>{name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="zip">ZIP code</Label>
+                <Input
+                  id="zip"
+                  name="zip"
+                  inputMode="numeric"
+                  autoComplete="postal-code"
+                  value={form.zip}
+                  onChange={(event) => update("zip", event.target.value)}
+                  aria-invalid={Boolean(fieldErrors.zip)}
+                  className={fieldClass}
+                  placeholder="98101"
+                />
+                {fieldErrors.zip ? (
+                  <p className="text-sm text-destructive">{fieldErrors.zip}</p>
+                ) : null}
+              </div>
+            </div>
+            <div className="rounded-2xl bg-secondary p-4 text-sm leading-6 text-secondary-foreground">
+              We currently specialize in Washington. If you choose another state,
+              we will still call and point you in the right direction.
+            </div>
+          </>
+        ) : null}
 
-        <ChoiceChips
-          legend="What kind of care?"
-          value={careType}
-          onChange={(value) => setCareType(value)}
-          options={careTypes.map((item) => ({ id: item.id, label: item.title }))}
-          error={fieldErrors.careType}
-        />
+        {step === 3 ? (
+          <>
+            <div className="grid gap-2">
+              <Label htmlFor="name">Your name</Label>
+              <Input
+                id="name"
+                name="name"
+                autoComplete="name"
+                value={form.name}
+                onChange={(event) => update("name", event.target.value)}
+                aria-invalid={Boolean(fieldErrors.name)}
+                className={fieldClass}
+              />
+              {fieldErrors.name ? (
+                <p className="text-sm text-destructive">{fieldErrors.name}</p>
+              ) : null}
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="phone">Phone</Label>
+              <Input
+                id="phone"
+                name="phone"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                value={form.phone}
+                onChange={(event) => update("phone", event.target.value)}
+                aria-invalid={Boolean(fieldErrors.phone)}
+                className={fieldClass}
+              />
+              {fieldErrors.phone ? (
+                <p className="text-sm text-destructive">{fieldErrors.phone}</p>
+              ) : null}
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="email">Email (optional)</Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                value={form.email}
+                onChange={(event) => update("email", event.target.value)}
+                className={fieldClass}
+              />
+            </div>
 
-        <ChoiceChips
-          legend="How soon?"
-          value={form.timeline}
-          onChange={(value) => update("timeline", value)}
-          options={timelines}
-          error={fieldErrors.timeline}
-        />
-
-        <div className="grid gap-2">
-          <Label htmlFor="email">Email (optional)</Label>
-          <Input
-            id="email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            value={form.email}
-            onChange={(event) => update("email", event.target.value)}
-            className={fieldClass}
-          />
-        </div>
-
-        <label className="flex items-start gap-3 text-sm leading-6 text-muted-foreground">
+            <label className="flex items-start gap-3 text-sm leading-6 text-muted-foreground">
           <input
             type="checkbox"
             name="consent"
@@ -295,9 +339,11 @@ export function LeadForm({ className }: { className?: string }) {
               Privacy
             </a>
           </span>
-        </label>
-        {fieldErrors.consent ? (
-          <p className="-mt-3 text-sm text-destructive">{fieldErrors.consent}</p>
+            </label>
+            {fieldErrors.consent ? (
+              <p className="-mt-3 text-sm text-destructive">{fieldErrors.consent}</p>
+            ) : null}
+          </>
         ) : null}
 
         {error ? (
@@ -309,13 +355,53 @@ export function LeadForm({ className }: { className?: string }) {
           </p>
         ) : null}
 
-        <button
-          type="submit"
-          disabled={status === "saving"}
-          className={cn(buttonVariants({ variant: "default" }), "h-12 w-full text-base")}
-        >
-          {status === "saving" ? "Sending…" : "Request a callback"}
-        </button>
+        <div className="flex gap-3">
+          {step > 1 ? (
+            <button
+              type="button"
+              onClick={() => {
+                setError(null);
+                setStep((current) => current - 1);
+              }}
+              className={cn(buttonVariants({ variant: "outline" }), "h-12 px-5 text-base")}
+            >
+              Back
+            </button>
+          ) : null}
+          {step < 3 ? (
+            <button
+              type="button"
+              onClick={() => {
+                const stepErrors: typeof fieldErrors = {};
+                if (step === 1) {
+                  if (!form.whoNeedsCare) stepErrors.whoNeedsCare = "Tell us who needs care.";
+                  if (!careType) stepErrors.careType = "Choose the kind of care you are considering.";
+                  if (!form.timeline) stepErrors.timeline = "Choose a timeline.";
+                } else {
+                  if (form.city.trim().length < 2) stepErrors.city = "Please enter the city where care is needed.";
+                  if (!/^\d{5}(-\d{4})?$/.test(form.zip.trim())) stepErrors.zip = "Use a 5-digit ZIP code.";
+                }
+                if (Object.keys(stepErrors).length) {
+                  setFieldErrors((current) => ({ ...current, ...stepErrors }));
+                  return;
+                }
+                setError(null);
+                setStep((current) => current + 1);
+              }}
+              className={cn(buttonVariants({ variant: "default" }), "h-12 flex-1 text-base")}
+            >
+              Continue
+            </button>
+          ) : (
+            <button
+              type="submit"
+              disabled={status === "saving"}
+              className={cn(buttonVariants({ variant: "default" }), "h-12 flex-1 text-base")}
+            >
+              {status === "saving" ? "Sending…" : "Request a callback"}
+            </button>
+          )}
+        </div>
         <p className="text-center text-sm text-muted-foreground">
           Prefer to talk now?{" "}
           <a href={site.phoneHref} className="font-medium text-foreground underline underline-offset-2">

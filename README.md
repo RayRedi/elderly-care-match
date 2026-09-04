@@ -29,7 +29,7 @@ NOTION_DATABASE_ID=86e4fdfe81964fbf80a521e0f8176afc
 
 4. Restart the dev server.
 
-New submissions now create a row with name, phone, ZIP, care type, timeline, and consent.
+New submissions now create a row with name, phone, city, state, ZIP, care type, timeline, and consent.
 
 ### Backfill leads captured before setup
 

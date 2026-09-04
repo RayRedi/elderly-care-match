@@ -30,10 +30,10 @@ export function SiteHeader() {
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-border/70 bg-card">
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-8 text-sm text-muted-foreground sm:flex-row sm:items-start sm:justify-between sm:px-6">
+    <footer className="border-t border-[#0f766e] bg-[#042f2e] text-white">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-8 text-sm text-white/70 sm:flex-row sm:items-start sm:justify-between sm:px-6">
         <div>
-          <p className="font-heading text-base text-foreground">{site.name}</p>
+          <p className="font-heading text-base text-white">{site.name}</p>
           <p className="mt-1 max-w-md leading-6">
             Free matching help for Washington families. We are not a care home,
             not DSHS, and we do not push a particular building.
@@ -41,7 +41,7 @@ export function SiteFooter() {
         </div>
         <div className="space-y-1">
           <p>
-            <a href={site.phoneHref} className="text-foreground hover:underline">
+            <a href={site.phoneHref} className="text-white hover:underline">
               {site.phone}
             </a>
           </p>
