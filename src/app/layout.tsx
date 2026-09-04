@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Newsreader, Source_Sans_3 } from "next/font/google";
 
+import { NotionSetupNotice } from "@/components/notion-setup-notice";
 import { SiteFooter, SiteHeader } from "@/components/site-chrome";
 import { site } from "@/lib/site";
 
@@ -38,6 +39,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${sourceSans.variable} ${newsreader.variable} h-full antialiased`}
     >
       <body className="page-shell flex min-h-full flex-col">
+        <NotionSetupNotice />
         <SiteHeader />
         <main className="flex-1">{children}</main>
         <SiteFooter />
