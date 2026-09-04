@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import Link from "next/link";
 import {
   ArrowLeft,
   Check,
@@ -329,13 +330,13 @@ function ExampleIntro({
 }) {
   return (
     <section className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 sm:py-12">
-      <a
+      <Link
         href="/examples"
         className="mb-8 inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline"
       >
         <ArrowLeft className="size-4" aria-hidden />
         All onboarding examples
-      </a>
+      </Link>
       <div className="mb-8 max-w-3xl">
         <p className="text-sm font-semibold tracking-wide text-primary uppercase">{eyebrow}</p>
         <h1 className="font-heading mt-2 text-4xl leading-tight sm:text-5xl">{title}</h1>
