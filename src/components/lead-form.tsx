@@ -4,7 +4,6 @@ import { useState, type FormEvent } from "react";
 import { CheckCircle2Icon } from "lucide-react";
 
 import { ChoiceChips } from "@/components/choice-chips";
-import { useLeadSelection } from "@/components/lead-context";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { buttonVariants } from "@/components/ui/button";
@@ -20,6 +19,7 @@ import { cn } from "@/lib/utils";
 
 type Who = (typeof whoNeedsCare)[number];
 type Timeline = (typeof timelines)[number]["id"];
+type CareType = (typeof careTypes)[number]["id"];
 
 type FormState = {
   name: string;
@@ -29,6 +29,7 @@ type FormState = {
   zip: string;
   email: string;
   whoNeedsCare: Who | "";
+  careType: CareType | "";
   timeline: Timeline | "";
   consent: boolean;
 };
@@ -41,6 +42,7 @@ const emptyForm: FormState = {
   zip: "",
   email: "",
   whoNeedsCare: "",
+  careType: "",
   timeline: "",
   consent: false,
 };
@@ -48,12 +50,11 @@ const emptyForm: FormState = {
 const fieldClass = "h-11 bg-background text-base md:text-base";
 
 export function LeadForm({ className }: { className?: string }) {
-  const { careType, setCareType } = useLeadSelection();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<
-    Partial<Record<keyof FormState | "careType", string>>
+    Partial<Record<keyof FormState, string>>
   >({});
   const [status, setStatus] = useState<"idle" | "saving" | "success" | "error">(
     "idle"
@@ -68,9 +69,9 @@ export function LeadForm({ className }: { className?: string }) {
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const next = form;
-    const selectedCare = careType;
+    const selectedCare = form.careType;
 
-    const nextErrors: Partial<Record<keyof FormState | "careType", string>> = {};
+    const nextErrors: Partial<Record<keyof FormState, string>> = {};
     if (next.name.trim().length < 2) nextErrors.name = "Please enter your name.";
     if (next.phone.replace(/\D/g, "").length < 10) {
       nextErrors.phone = "Use a 10-digit phone number.";
@@ -188,7 +189,7 @@ export function LeadForm({ className }: { className?: string }) {
       </p>
 
       <input type="hidden" name="whoNeedsCare" value={form.whoNeedsCare} />
-      <input type="hidden" name="careType" value={careType} />
+      <input type="hidden" name="careType" value={form.careType} />
       <input type="hidden" name="timeline" value={form.timeline} />
 
       <div className="mt-6 grid gap-5">
@@ -203,10 +204,10 @@ export function LeadForm({ className }: { className?: string }) {
             />
             <ChoiceChips
               legend="What kind of care?"
-              value={careType}
-              onChange={(value) => setCareType(value)}
+              value={form.careType}
+              onChange={(value) => update("careType", value)}
               options={careTypes.map((item) => ({ id: item.id, label: item.title }))}
-              error={careType ? undefined : fieldErrors.careType}
+              error={fieldErrors.careType}
             />
             <ChoiceChips
               legend="How soon?"
@@ -375,7 +376,7 @@ export function LeadForm({ className }: { className?: string }) {
                 const stepErrors: typeof fieldErrors = {};
                 if (step === 1) {
                   if (!form.whoNeedsCare) stepErrors.whoNeedsCare = "Tell us who needs care.";
-                  if (!careType) stepErrors.careType = "Choose the kind of care you are considering.";
+                  if (!form.careType) stepErrors.careType = "Choose the kind of care you are considering.";
                   if (!form.timeline) stepErrors.timeline = "Choose a timeline.";
                 } else {
                   if (form.city.trim().length < 2) stepErrors.city = "Please enter the city where care is needed.";
