@@ -47,11 +47,20 @@ export const leadInputSchema = z.object({
   consent: z.literal(true, {
     error: "Please check the box so we can call you back.",
   }),
+  source: z
+    .enum([
+      "landing",
+      "example-guided",
+      "example-quick",
+      "example-conversation",
+      "example-checklist",
+    ])
+    .optional(),
 });
 
 export type LeadInput = z.infer<typeof leadInputSchema>;
 
-export type StoredLead = LeadInput & {
+export type StoredLead = Omit<LeadInput, "source"> & {
   leadId: string;
   phone: string;
   email?: string;
@@ -110,7 +119,7 @@ export function buildStoredLead(input: Omit<LeadInput, "email"> & { email?: stri
     ...input,
     leadId: `ecm_${crypto.randomUUID()}`,
     consentText,
-    source: "landing",
+    source: input.source ?? "landing",
     capturedAt: new Date().toISOString(),
   };
 }
