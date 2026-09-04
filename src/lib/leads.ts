@@ -47,15 +47,7 @@ export const leadInputSchema = z.object({
   consent: z.literal(true, {
     error: "Please check the box so we can call you back.",
   }),
-  source: z
-    .enum([
-      "landing",
-      "example-guided",
-      "example-quick",
-      "example-conversation",
-      "example-checklist",
-    ])
-    .optional(),
+  source: z.enum(["landing"]).optional(),
 });
 
 export type LeadInput = z.infer<typeof leadInputSchema>;

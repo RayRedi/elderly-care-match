@@ -27,25 +27,7 @@ disabled so families can open it without logging in.
 Put this URL in Google Business Profile, Instagram bio, 211/listing copy, ads, and hospital-desk
 cards.
 
-## Onboarding concepts for review
-
-Four working callback flows live under `/examples` for internal comparison. They are marked
-`noindex` and are not linked from the public homepage.
-
-| Page | Concept | Reduces |
-| --- | --- | --- |
-| [`/examples/guided`](https://elderly-care-match.vercel.app/examples/guided) | One question per screen, 5 steps | Cognitive load |
-| [`/examples/quick`](https://elderly-care-match.vercel.app/examples/quick) | Who, where, name, phone only | Total effort |
-| [`/examples/conversation`](https://elderly-care-match.vercel.app/examples/conversation) | Starts from the family's situation | Jargon and uncertainty |
-| [`/examples/checklist`](https://elderly-care-match.vercel.app/examples/checklist) | Everything visible at once | Hidden-step anxiety |
-
-All four post to the same `/api/leads` endpoint and write to Family Care Leads. Each tags the
-Notion **Source** property (`example-guided`, `example-quick`, `example-conversation`,
-`example-checklist`) so submissions can be attributed per concept.
-
-Design constraints shared by all four: minimum 12-unit tap targets, plain language, visible
-click-to-call, validation only on submit with answers preserved, and no account requirement.
-Sources are listed at the bottom of `/examples`.
+The homepage is a five-step guided callback form. Submissions go to Family Care Leads.
 
 [www.elderlycarematch.com](https://www.elderlycarematch.com/) stays as-is. This page is only the
 capture funnel into Family Care Leads.
