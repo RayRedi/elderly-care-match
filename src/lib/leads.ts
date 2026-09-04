@@ -115,7 +115,10 @@ export function buildStoredLead(input: Omit<LeadInput, "email"> & { email?: stri
   };
 }
 
-const localFile = path.join(process.cwd(), ".data", "leads.json");
+const localFile = path.join(
+  process.env.VERCEL ? "/tmp" : process.cwd(),
+  process.env.VERCEL ? "ecm-leads.json" : path.join(".data", "leads.json")
+);
 
 export async function readLocalLeads(): Promise<StoredLead[]> {
   try {
@@ -149,7 +152,7 @@ function textProp(content: string) {
 }
 
 async function saveNotionLead(lead: StoredLead) {
-  const token = process.env.NOTION_TOKEN;
+  const token = process.env.NOTION_TOKEN || process.env.ECM_NOTION_TOKEN;
   const databaseId = process.env.NOTION_DATABASE_ID ?? defaultNotionDatabaseId;
   if (!token) {
     return false;
@@ -201,14 +204,24 @@ export async function captureLead(input: Omit<LeadInput, "email"> & { email?: st
   try {
     const wroteToNotion = await saveNotionLead(lead);
     if (wroteToNotion) {
-      await saveLocalLead({ ...lead, syncedAt: new Date().toISOString() });
+      if (!process.env.VERCEL) {
+        await saveLocalLead({ ...lead, syncedAt: new Date().toISOString() });
+      }
       return { destination: "notion" };
     }
   } catch (error) {
     console.error(error);
-    await saveLocalLead(lead);
+    if (!process.env.VERCEL) {
+      await saveLocalLead(lead);
+    }
     throw new Error(
-      "We could not reach Notion. Your note was saved on this server so it is not lost — try again or call us."
+      "We could not reach Notion. Please call us and we will take your information over the phone."
+    );
+  }
+
+  if (process.env.VERCEL) {
+    throw new Error(
+      "This page is not connected to our lead list yet. Please call us and we will help from there."
     );
   }
 

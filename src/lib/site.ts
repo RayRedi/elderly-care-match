@@ -67,3 +67,15 @@ export const states = [
 ] as const;
 
 export const defaultNotionDatabaseId = "86e4fdfe81964fbf80a521e0f8176afc";
+
+export function publicSiteUrl() {
+  const explicit = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
+  if (explicit) return explicit;
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  }
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+  return "http://127.0.0.1:4317";
+}

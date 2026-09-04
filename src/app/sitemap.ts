@@ -1,7 +1,9 @@
 import type { MetadataRoute } from "next";
 
+import { publicSiteUrl } from "@/lib/site";
+
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = process.env.NEXT_PUBLIC_SITE_URL ?? "http://127.0.0.1:4317";
+  const base = publicSiteUrl();
   return [
     { url: base, lastModified: new Date() },
     { url: `${base}/privacy`, lastModified: new Date() },

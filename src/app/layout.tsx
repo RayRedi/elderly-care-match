@@ -3,7 +3,7 @@ import { Newsreader, Source_Sans_3 } from "next/font/google";
 
 import { NotionSetupNotice } from "@/components/notion-setup-notice";
 import { SiteFooter, SiteHeader } from "@/components/site-chrome";
-import { site } from "@/lib/site";
+import { publicSiteUrl, site } from "@/lib/site";
 
 import "./globals.css";
 
@@ -18,7 +18,7 @@ const newsreader = Newsreader({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://127.0.0.1:4317"),
+  metadataBase: new URL(publicSiteUrl()),
   title: {
     default: "Elderly Care Match — Free senior care guidance in Washington",
     template: "%s · Elderly Care Match",
